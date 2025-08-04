@@ -1,43 +1,91 @@
 import os
 
-def menu_goster():
-    print("\n📝 Yapılacaklar Listesi")
-    print("1. Görev Ekle")
-    print("2. Görevleri Göster")
-    print("3. Çıkış\n")
+gorevler = []
 
-def gorevleri_yukle(dosya_adi="gorevler.txt"):
-    if not os.path.exists(dosya_adi):
-        return []
-    with open(dosya_adi, "r", encoding="utf-8") as f:
-        return [satir.strip() for satir in f.readlines()]
+def gorevleri_yukle():
+    if os.path.exists("gorevler.txt"):
+        with open("gorevler.txt", "r", encoding="utf-8") as f:
+            for satir in f:
+                satir = satir.strip()
+                if "|" in satir:
+                    durum, aciklama = satir.split("|", 1)
+                    gorevler.append({"aciklama": aciklama, "tamamlandi": durum == "TAMAMLANDI"})
 
-def gorevleri_kaydet(gorevler, dosya_adi="gorevler.txt"):
-    with open(dosya_adi, "w", encoding="utf-8") as f:
+def gorevleri_kaydet():
+    with open("gorevler.txt", "w", encoding="utf-8") as f:
         for gorev in gorevler:
-            f.write(gorev + "\n")
+            durum = "TAMAMLANDI" if gorev["tamamlandi"] else "YAPILACAK"
+            f.write(f"{durum}|{gorev['aciklama']}\n")
 
-# Başlangıçta görevleri dosyadan yükle
-gorevler = gorevleri_yukle()
+def gorev_ekle():
+    aciklama = input("Görev açıklaması: ")
+    gorevler.append({"aciklama": aciklama, "tamamlandi": False})
 
-while True:
-    menu_goster()
-    secim = input("Seçiminizi girin (1-3): ")
+def gorevleri_listele(filtre=None):
+    for i, gorev in enumerate(gorevler, 1):
+        durum = "✓" if gorev["tamamlandi"] else "✗"
+        if filtre == "tamamlandi" and not gorev["tamamlandi"]:
+            continue
+        if filtre == "yapilacak" and gorev["tamamlandi"]:
+            continue
+        print(f"{i}. [{durum}] {gorev['aciklama']}")
 
-    if secim == "1":
-        yeni_gorev = input("Yeni görevi girin: ")
-        gorevler.append(yeni_gorev)
-        gorevleri_kaydet(gorevler)
-        print("✅ Görev eklendi!")
-    elif secim == "2":
-        print("\n📋 Görevler:")
-        if not gorevler:
-            print("Henüz hiç görev yok.")
-        else:
-            for i, gorev in enumerate(gorevler, 1):
-                print(f"{i}. {gorev}")
+def gorev_tamamla():
+    gorevleri_listele()
+    try:
+        no = int(input("Tamamlanan görev numarası: "))
+        gorevler[no - 1]["tamamlandi"] = True
+    except:
+        print("Hatalı giriş!")
+
+def gorev_sil():
+    gorevleri_listele()
+    try:
+        no = int(input("Silinecek görev numarası: "))
+        gorevler.pop(no - 1)
+    except:
+        print("Hatalı giriş!")
+
+def filtrele():
+    print("1. Tüm görevler")
+    print("2. Sadece tamamlananlar")
+    print("3. Sadece yapılacaklar")
+    secim = input("Seçim: ")
+    if secim == "2":
+        gorevleri_listele(filtre="tamamlandi")
     elif secim == "3":
-        print("👋 Programdan çıkılıyor...")
-        break
+        gorevleri_listele(filtre="yapilacak")
     else:
-        print("❌ Geçersiz seçim! Lütfen 1-3 arası bir sayı girin.")
+        gorevleri_listele()
+
+def menu():
+    gorevleri_yukle()
+    while True:
+        print("\n1. Görev Ekle")
+        print("2. Görevleri Listele")
+        print("3. Görev Tamamla")
+        print("4. Görev Sil")
+        print("5. Görevleri Filtrele")
+        print("0. Çıkış")
+
+        secim = input("Seçiminiz: ")
+
+        if secim == "1":
+            gorev_ekle()
+        elif secim == "2":
+            gorevleri_listele()
+        elif secim == "3":
+            gorev_tamamla()
+        elif secim == "4":
+            gorev_sil()
+        elif secim == "5":
+            filtrele()
+        elif secim == "0":
+            gorevleri_kaydet()
+            print("Görevler kaydedildi. Çıkılıyor...")
+            break
+        else:
+            print("Geçersiz seçim!")
+
+if __name__ == "__main__":
+    menu()
